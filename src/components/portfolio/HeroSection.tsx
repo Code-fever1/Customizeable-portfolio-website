@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { ArrowDown, Download, Mail, FolderOpen } from "lucide-react";
+import { ArrowDown, Download, Mail, FolderOpen, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MagneticButton from "./MagneticButton";
 import type { PortfolioProfile } from "@/types/profile";
 import { createSlug } from "@/lib/profileStorage";
+import { toast } from "@/components/ui/sonner";
 
 type HeroSectionProps = {
   profile: PortfolioProfile;
+  isExportedBuild?: boolean;
 };
 
 const splitName = (name: string) => {
@@ -21,7 +23,7 @@ const splitName = (name: string) => {
   };
 };
 
-const HeroSection = ({ profile }: HeroSectionProps) => {
+const HeroSection = ({ profile, isExportedBuild = false }: HeroSectionProps) => {
   const [roleIndex, setRoleIndex] = useState(0);
   const [text, setText] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -50,6 +52,30 @@ const HeroSection = ({ profile }: HeroSectionProps) => {
     link.download = profile.cv.fileName || "cv";
     link.rel = "noreferrer";
     link.click();
+  };
+
+  const handleDownloadWebsiteZip = async () => {
+    try {
+      const res = await fetch("/__export/web", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+
+      if (!res.ok) {
+        throw new Error("Export endpoint not available");
+      }
+
+      const blob = await res.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `${createSlug(profile.name)}-web.zip`;
+      link.click();
+      window.URL.revokeObjectURL(objectUrl);
+    } catch {
+      toast.error("Web export works only on your local dev server.");
+    }
   };
 
   useEffect(() => {
@@ -138,15 +164,28 @@ const HeroSection = ({ profile }: HeroSectionProps) => {
               </Button>
             </MagneticButton>
           ) : null}
-          <MagneticButton data-magnetic>
-            <Button
-              variant="outline"
-              className="rounded-full px-6 border-border/50 backdrop-blur-sm"
-              onClick={handleDownloadProfile}
-            >
-              <Download className="h-4 w-4 mr-2" /> Download Profile JSON
-            </Button>
-          </MagneticButton>
+          {!isExportedBuild ? (
+            <MagneticButton data-magnetic>
+              <Button
+                variant="outline"
+                className="rounded-full px-6 border-border/50 backdrop-blur-sm"
+                onClick={handleDownloadWebsiteZip}
+              >
+                <Package className="h-4 w-4 mr-2" /> Download Website ZIP
+              </Button>
+            </MagneticButton>
+          ) : null}
+          {!isExportedBuild ? (
+            <MagneticButton data-magnetic>
+              <Button
+                variant="outline"
+                className="rounded-full px-6 border-border/50 backdrop-blur-sm"
+                onClick={handleDownloadProfile}
+              >
+                <Download className="h-4 w-4 mr-2" /> Download Profile JSON
+              </Button>
+            </MagneticButton>
+          ) : null}
           <MagneticButton data-magnetic>
             <Button
               variant="ghost"

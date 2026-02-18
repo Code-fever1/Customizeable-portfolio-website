@@ -17,9 +17,10 @@ import type { PortfolioProfile } from "@/types/profile";
 
 type IndexProps = {
   profile: PortfolioProfile;
+  isExportedBuild?: boolean;
 };
 
-const Index = ({ profile }: IndexProps) => {
+const Index = ({ profile, isExportedBuild = false }: IndexProps) => {
   useEffect(() => {
     document.title = `${profile.name} | Portfolio`;
   }, [profile.name]);
@@ -42,9 +43,13 @@ const Index = ({ profile }: IndexProps) => {
       {showEffects ? <CustomCursor /> : null}
       {showEffects ? <NoiseOverlay /> : null}
       {showEffects ? <CommandPalette links={profile.links} /> : null}
-      <Navbar name={profile.name} theme={profile.theme} />
+      <Navbar
+        name={profile.name}
+        theme={profile.theme}
+        showCreateYours={!isExportedBuild}
+      />
       <main>
-        <HeroSection profile={profile} />
+        <HeroSection profile={profile} isExportedBuild={isExportedBuild} />
         <TechMarquee tools={profile.tools} />
         <AboutSection profile={profile} />
         <SkillsSection skills={profile.skills} />

@@ -95,6 +95,9 @@ const BuilderPage = () => {
     }
 
     if (backgroundType === "image") {
+      if (!backgroundImageUrl.trim()) {
+        return { type: "solid", color: mainBgColor };
+      }
       return {
         type: "image",
         imageUrl: backgroundImageUrl.trim(),
@@ -215,6 +218,30 @@ const BuilderPage = () => {
     link.download = fileName;
     link.click();
     window.URL.revokeObjectURL(objectUrl);
+  };
+
+  const handleDownloadWebZip = async () => {
+    const profile = buildProfileFromForm();
+
+    try {
+      const res = await fetch("/__export/web", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+
+      if (!res.ok) throw new Error("Export endpoint not available");
+
+      const blob = await res.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `${profile.slug}-web.zip`;
+      link.click();
+      window.URL.revokeObjectURL(objectUrl);
+    } catch {
+      setImportStatus("Web export works only on your local dev server.");
+    }
   };
 
   const applyImportedProfile = (profile: PortfolioProfile) => {
@@ -373,6 +400,10 @@ const BuilderPage = () => {
             <Button type="button" variant="outline" onClick={handleDownloadJson}>
               <Download className="h-4 w-4 mr-2" />
               Export JSON
+            </Button>
+            <Button type="button" variant="outline" onClick={handleDownloadWebZip}>
+              <Download className="h-4 w-4 mr-2" />
+              Download Website ZIP
             </Button>
             <label className="inline-flex">
               <Input

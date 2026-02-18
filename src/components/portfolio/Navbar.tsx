@@ -15,6 +15,7 @@ const navLinks = [
 type NavbarProps = {
   name: string;
   theme?: PortfolioTheme;
+  showCreateYours?: boolean;
 };
 
 const resolveTheme = (theme?: PortfolioTheme) => {
@@ -25,7 +26,7 @@ const resolveTheme = (theme?: PortfolioTheme) => {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 };
 
-const Navbar = ({ name, theme }: NavbarProps) => {
+const Navbar = ({ name, theme, showCreateYours = true }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dark, setDark] = useState(() => resolveTheme(theme));
@@ -100,12 +101,14 @@ const Navbar = ({ name, theme }: NavbarProps) => {
           <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme" className={iconButtonClass}>
             {dark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4 text-black" />}
           </Button>
-          <a
-            href="/"
-            className="text-xs px-4 py-2 rounded-md bg-primary text-primary-foreground font-semibold shadow-sm transition-colors duration-200 hover:bg-primary/80 hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-          >
-            Create Yours
-          </a>
+          {showCreateYours ? (
+            <a
+              href="/"
+              className="text-xs px-4 py-2 rounded-md bg-primary text-primary-foreground font-semibold shadow-sm transition-colors duration-200 hover:bg-primary/80 hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              Create Yours
+            </a>
+          ) : null}
         </div>
 
         {/* Mobile toggle */}
@@ -137,15 +140,17 @@ const Navbar = ({ name, theme }: NavbarProps) => {
                 {l.label}
               </a>
             ))}
-            <a
-              href="/"
-              onClick={() => setMobileOpen(false)}
-              className={`text-sm py-2 transition-colors ${
-                dark ? "text-gray-500 hover:text-gray-300" : "text-gray-700 hover:text-black"
-              }`}
-            >
-              Create Yours
-            </a>
+            {showCreateYours ? (
+              <a
+                href="/"
+                onClick={() => setMobileOpen(false)}
+                className={`text-sm py-2 transition-colors ${
+                  dark ? "text-gray-500 hover:text-gray-300" : "text-gray-700 hover:text-black"
+                }`}
+              >
+                Create Yours
+              </a>
+            ) : null}
           </div>
         </div>
       )}

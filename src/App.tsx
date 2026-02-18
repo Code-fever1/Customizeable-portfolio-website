@@ -19,6 +19,7 @@ const AppInner = ({
   setShowWelcome: (value: boolean) => void;
 }) => {
   const navigate = useNavigate();
+  const isExportBuild = import.meta.env.MODE === "export";
 
   const handleWelcomeComplete = (info: { name: string; email: string }) => {
     window.localStorage.setItem("welcomeInfoSubmitted", "true");
@@ -32,7 +33,11 @@ const AppInner = ({
     <WelcomeInfo onComplete={handleWelcomeComplete} />
   ) : (
     <Routes>
-      <Route path="/" element={<BuilderPage />} />
+      <Route
+        path="/"
+        element={isExportBuild ? <PortfolioPage exported /> : <BuilderPage />}
+      />
+      {isExportBuild ? <Route path="/builder" element={<BuilderPage />} /> : null}
       <Route path="/u/:slug" element={<PortfolioPage />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
