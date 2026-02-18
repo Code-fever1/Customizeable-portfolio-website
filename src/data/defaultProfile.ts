@@ -10,6 +10,11 @@ export const defaultProfile: PortfolioProfile = {
   yearsOfExperience: 4,
   avatarUrl: "/public/placeholder.svg",
   mainBgColor: "#1e1b4b",
+  template: "neo",
+  background: {
+    type: "solid",
+    color: "#1e1b4b",
+  },
   tools: [
     "React",
     "TypeScript",

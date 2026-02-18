@@ -39,6 +39,19 @@ const HeroSection = ({ profile }: HeroSectionProps) => {
     window.URL.revokeObjectURL(link.href);
   };
 
+  const handleDownloadCv = () => {
+    if (!profile.cv) return;
+
+    const link = document.createElement("a");
+    const href = profile.cv.dataUrl ?? profile.cv.url;
+    if (!href) return;
+
+    link.href = href;
+    link.download = profile.cv.fileName || "cv";
+    link.rel = "noreferrer";
+    link.click();
+  };
+
   useEffect(() => {
     const currentRole = roles[roleIndex];
     let timeout: ReturnType<typeof setTimeout>;
@@ -68,22 +81,6 @@ const HeroSection = ({ profile }: HeroSectionProps) => {
       id="hero"
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
     >
-      <div className="absolute inset-0 bg-background z-0" />
-
-      <div className="absolute inset-0 z-0">
-        <div
-          className="absolute inset-0 animate-gradient-shift"
-          style={{
-            background: profile.mainBgColor
-              ? profile.mainBgColor
-              : "linear-gradient(135deg, hsl(250 80% 15%), hsl(280 70% 12%), hsl(200 90% 12%), hsl(250 80% 15%))",
-            backgroundSize: "400% 400%",
-          }}
-        />
-      </div>
-
-      
-
       <div className="relative z-10 container mx-auto px-4 flex flex-col items-center text-center gap-6 max-w-3xl">
         <div className="glass rounded-full px-4 py-1.5 text-xs font-mono text-muted-foreground tracking-wider border border-border/30">
           AVAILABLE FOR WORK
@@ -130,6 +127,17 @@ const HeroSection = ({ profile }: HeroSectionProps) => {
               </a>
             </Button>
           </MagneticButton>
+          {profile.cv ? (
+            <MagneticButton data-magnetic>
+              <Button
+                variant="outline"
+                className="rounded-full px-6 border-border/50 backdrop-blur-sm"
+                onClick={handleDownloadCv}
+              >
+                <Download className="h-4 w-4 mr-2" /> Download CV
+              </Button>
+            </MagneticButton>
+          ) : null}
           <MagneticButton data-magnetic>
             <Button
               variant="outline"

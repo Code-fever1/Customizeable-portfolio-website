@@ -24,8 +24,41 @@ export type PortfolioLinks = {
 
 export type PortfolioTheme = "light" | "dark" | "system";
 
+export type PortfolioTemplate = "neo" | "minimal";
+
+export type PortfolioFileAsset = {
+  fileName: string;
+  mimeType: string;
+  /**
+   * Portable representation for JSON export/import (base64 data URL).
+   * Omit when exporting as a website to keep payload small.
+   */
+  dataUrl?: string;
+  /**
+   * URL path used by exported websites (e.g. "/files/cv.pdf").
+   */
+  url?: string;
+};
+
+export type PortfolioBackground =
+  | {
+      type: "solid";
+      color: string;
+    }
+  | {
+      type: "gradient";
+      from: string;
+      to: string;
+      angle?: number;
+    }
+  | {
+      type: "image";
+      imageUrl: string;
+      overlayOpacity?: number;
+    };
+
 export type PortfolioProfile = {
-  mainBgColor: any;
+  mainBgColor: string;
   slug: string;
   name: string;
   tagline: string;
@@ -39,4 +72,7 @@ export type PortfolioProfile = {
   projects: PortfolioProject[];
   links: PortfolioLinks;
   theme?: PortfolioTheme;
+  template?: PortfolioTemplate;
+  background?: PortfolioBackground;
+  cv?: PortfolioFileAsset;
 };

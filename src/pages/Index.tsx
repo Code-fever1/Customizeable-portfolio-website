@@ -12,6 +12,7 @@ import ServicesSection from "@/components/portfolio/ServicesSection";
 import ContactSection from "@/components/portfolio/ContactSection";
 import Footer from "@/components/portfolio/Footer";
 import CommandPalette from "@/components/portfolio/CommandPalette";
+import PageBackground from "@/components/portfolio/PageBackground";
 import type { PortfolioProfile } from "@/types/profile";
 
 type IndexProps = {
@@ -23,12 +24,24 @@ const Index = ({ profile }: IndexProps) => {
     document.title = `${profile.name} | Portfolio`;
   }, [profile.name]);
 
+  const template = profile.template ?? "neo";
+  const background = profile.background ?? {
+    type: "solid" as const,
+    color: profile.mainBgColor,
+  };
+  const showEffects = template === "neo";
+
   return (
-    <div className="relative min-h-screen bg-background overflow-x-hidden cursor-none md:cursor-none">
-      <ParticleBackground />
-      <CustomCursor />
-      <NoiseOverlay />
-      <CommandPalette links={profile.links} />
+    <div
+      className={`relative min-h-screen overflow-x-hidden ${
+        showEffects ? "cursor-none md:cursor-none" : ""
+      }`}
+    >
+      <PageBackground background={background} fallbackColor={profile.mainBgColor} />
+      {showEffects ? <ParticleBackground /> : null}
+      {showEffects ? <CustomCursor /> : null}
+      {showEffects ? <NoiseOverlay /> : null}
+      {showEffects ? <CommandPalette links={profile.links} /> : null}
       <Navbar name={profile.name} theme={profile.theme} />
       <main>
         <HeroSection profile={profile} />

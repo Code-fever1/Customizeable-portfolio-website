@@ -8,9 +8,11 @@ import ColorPicker from "@/components/ui/ColorPicker";
 import { defaultProfile } from "@/data/defaultProfile";
 import { createSlug, listProfiles, saveProfile, deleteProfile } from "@/lib/profileStorage";
 import type {
+  PortfolioBackground,
   PortfolioProfile,
   PortfolioProject,
   PortfolioSkill,
+  PortfolioTemplate,
   PortfolioTheme,
 } from "@/types/profile";
 
@@ -41,10 +43,40 @@ const BuilderPage = () => {
   const [linkedin, setLinkedin] = useState(defaultProfile.links.linkedin ?? "");
   const [email, setEmail] = useState(defaultProfile.links.email ?? "");
   const [theme, setTheme] = useState<PortfolioTheme>(defaultProfile.theme ?? "dark");
+  const [template, setTemplate] = useState<PortfolioTemplate>(defaultProfile.template ?? "neo");
   const [avatarStatus, setAvatarStatus] = useState("");
+  const [cvStatus, setCvStatus] = useState("");
+  const [backgroundStatus, setBackgroundStatus] = useState("");
   const [importStatus, setImportStatus] = useState("");
   const [savedSlugs, setSavedSlugs] = useState<string[]>(() => listProfiles());
-  const [mainBgColor, setMainBgColor] = useState("#1e1b4b");
+  const [mainBgColor, setMainBgColor] = useState(defaultProfile.mainBgColor);
+  const [cv, setCv] = useState<PortfolioProfile["cv"]>(defaultProfile.cv);
+  const [backgroundType, setBackgroundType] = useState<PortfolioBackground["type"]>(
+    defaultProfile.background?.type ?? "solid",
+  );
+  const [gradientFrom, setGradientFrom] = useState(
+    defaultProfile.background?.type === "gradient"
+      ? defaultProfile.background.from
+      : "#0f172a",
+  );
+  const [gradientTo, setGradientTo] = useState(
+    defaultProfile.background?.type === "gradient"
+      ? defaultProfile.background.to
+      : "#1e1b4b",
+  );
+  const [gradientAngle, setGradientAngle] = useState(() =>
+    defaultProfile.background?.type === "gradient"
+      ? String(defaultProfile.background.angle ?? 135)
+      : "135",
+  );
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState(
+    defaultProfile.background?.type === "image" ? defaultProfile.background.imageUrl : "",
+  );
+  const [backgroundOverlayOpacity, setBackgroundOverlayOpacity] = useState(() =>
+    defaultProfile.background?.type === "image"
+      ? String(defaultProfile.background.overlayOpacity ?? 0.55)
+      : "0.55",
+  );
 
   const suggestedSlug = useMemo(() => createSlug(name), [name]);
 
@@ -52,7 +84,37 @@ const BuilderPage = () => {
     document.title = name.trim() ? `${name.trim()} | Builder` : "Portfolio Builder";
   }, [name]);
 
-  const buildProfileFromForm = (): PortfolioProfile & { mainBgColor?: string } => ({
+  const buildBackgroundFromForm = (): PortfolioBackground => {
+    if (backgroundType === "gradient") {
+      return {
+        type: "gradient",
+        from: gradientFrom,
+        to: gradientTo,
+        angle: Number.parseFloat(gradientAngle) || 135,
+      };
+    }
+
+    if (backgroundType === "image") {
+      return {
+        type: "image",
+        imageUrl: backgroundImageUrl.trim(),
+        overlayOpacity: Math.max(
+          0,
+          Math.min(1, Number.parseFloat(backgroundOverlayOpacity) || 0.55),
+        ),
+      };
+    }
+
+    return {
+      type: "solid",
+      color: mainBgColor,
+    };
+  };
+
+  const buildProfileFromForm = (): PortfolioProfile => {
+    const background = buildBackgroundFromForm();
+
+    return {
     slug: suggestedSlug,
     name: name.trim(),
     tagline: tagline.trim(),
@@ -84,8 +146,17 @@ const BuilderPage = () => {
       email: email.trim() || undefined,
     },
     theme,
-    mainBgColor,
-  });
+    template,
+    mainBgColor:
+      background.type === "solid"
+        ? background.color
+        : background.type === "gradient"
+          ? background.from
+          : mainBgColor,
+    background,
+    cv: cv?.dataUrl || cv?.url ? cv : undefined,
+    };
+  };
 
   const handleSkillChange = (
     index: number,
@@ -161,7 +232,29 @@ const BuilderPage = () => {
     setLinkedin(profile.links.linkedin ?? "");
     setEmail(profile.links.email ?? "");
     setTheme(profile.theme ?? "dark");
+    setTemplate(profile.template ?? "neo");
+    setMainBgColor(profile.mainBgColor ?? defaultProfile.mainBgColor);
+    setBackgroundType(profile.background?.type ?? "solid");
+    if (profile.background?.type === "gradient") {
+      setGradientFrom(profile.background.from);
+      setGradientTo(profile.background.to);
+      setGradientAngle(String(profile.background.angle ?? 135));
+    } else {
+      setGradientFrom("#0f172a");
+      setGradientTo(profile.mainBgColor ?? defaultProfile.mainBgColor);
+      setGradientAngle("135");
+    }
+    if (profile.background?.type === "image") {
+      setBackgroundImageUrl(profile.background.imageUrl);
+      setBackgroundOverlayOpacity(String(profile.background.overlayOpacity ?? 0.55));
+    } else {
+      setBackgroundImageUrl("");
+      setBackgroundOverlayOpacity("0.55");
+    }
+    setCv(profile.cv);
     setAvatarStatus("");
+    setCvStatus("");
+    setBackgroundStatus("");
   };
 
   const handleAvatarUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -209,6 +302,56 @@ const BuilderPage = () => {
     }
   };
 
+  const handleCvUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setCv({
+          fileName: file.name,
+          mimeType: file.type || "application/octet-stream",
+          dataUrl: reader.result,
+        });
+        setCvStatus(`CV selected: ${file.name}`);
+      } else {
+        setCvStatus("Could not read the selected file.");
+      }
+    };
+    reader.onerror = () => {
+      setCvStatus("Could not read the selected file.");
+    };
+    reader.readAsDataURL(file);
+    e.currentTarget.value = "";
+  };
+
+  const handleBackgroundImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setBackgroundStatus("Please select an image file.");
+      e.currentTarget.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setBackgroundImageUrl(reader.result);
+        setBackgroundStatus(`Background image selected: ${file.name}`);
+      } else {
+        setBackgroundStatus("Could not read the selected image.");
+      }
+    };
+    reader.onerror = () => {
+      setBackgroundStatus("Could not read the selected image.");
+    };
+    reader.readAsDataURL(file);
+    e.currentTarget.value = "";
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-10 max-w-5xl space-y-8">
@@ -252,10 +395,6 @@ const BuilderPage = () => {
         <form onSubmit={handleSaveAndOpen} className="space-y-8">
           <section className="glass rounded-2xl p-6 space-y-4">
             <h2 className="font-display text-xl">Basic Profile</h2>
-            <div className="mb-4">
-              <label className="block text-sm text-muted-foreground mb-1">Main Background Color</label>
-              <ColorPicker value={mainBgColor} onChange={setMainBgColor} />
-            </div>
             <div className="grid md:grid-cols-2 gap-4">
               <Input
                 required
@@ -263,6 +402,17 @@ const BuilderPage = () => {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Full name"
               />
+              <label className="flex flex-col gap-2">
+                <span className="text-sm text-muted-foreground">Template</span>
+                <select
+                  value={template}
+                  onChange={(e) => setTemplate(e.target.value as PortfolioTemplate)}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="neo">Neo (default)</option>
+                  <option value="minimal">Minimal</option>
+                </select>
+              </label>
               <label className="flex flex-col gap-2">
                 <span className="text-sm text-muted-foreground">Theme</span>
                 <select
@@ -273,6 +423,20 @@ const BuilderPage = () => {
                   <option value="dark">Dark</option>
                   <option value="light">Light</option>
                   <option value="system">System</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-2">
+                <span className="text-sm text-muted-foreground">Background</span>
+                <select
+                  value={backgroundType}
+                  onChange={(e) =>
+                    setBackgroundType(e.target.value as PortfolioBackground["type"])
+                  }
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="solid">Solid</option>
+                  <option value="gradient">Gradient</option>
+                  <option value="image">Image</option>
                 </select>
               </label>
               <Input
@@ -298,6 +462,119 @@ const BuilderPage = () => {
                 placeholder="Years of experience"
               />
             </div>
+
+            {backgroundType === "solid" ? (
+              <div className="rounded-xl border border-border/40 p-4">
+                <p className="text-sm text-muted-foreground mb-3">Solid background color</p>
+                <ColorPicker value={mainBgColor} onChange={setMainBgColor} />
+              </div>
+            ) : null}
+
+            {backgroundType === "gradient" ? (
+              <div className="rounded-xl border border-border/40 p-4 space-y-3">
+                <p className="text-sm text-muted-foreground">Gradient background</p>
+                <div className="grid md:grid-cols-3 gap-4 items-start">
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">From</p>
+                    <ColorPicker value={gradientFrom} onChange={setGradientFrom} />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">To</p>
+                    <ColorPicker value={gradientTo} onChange={setGradientTo} />
+                  </div>
+                  <label className="flex flex-col gap-2">
+                    <span className="text-xs text-muted-foreground">Angle (deg)</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={360}
+                      value={gradientAngle}
+                      onChange={(e) => setGradientAngle(e.target.value)}
+                    />
+                  </label>
+                </div>
+                <div
+                  className="h-12 rounded-lg border border-border/40"
+                  style={{
+                    backgroundImage: `linear-gradient(${
+                      Number.parseFloat(gradientAngle) || 135
+                    }deg, ${gradientFrom}, ${gradientTo})`,
+                  }}
+                />
+              </div>
+            ) : null}
+
+            {backgroundType === "image" ? (
+              <div className="rounded-xl border border-border/40 p-4 space-y-3">
+                <p className="text-sm text-muted-foreground">Background image</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="inline-flex">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleBackgroundImageUpload}
+                    />
+                    <span className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Background
+                    </span>
+                  </label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={!backgroundImageUrl}
+                    onClick={() => {
+                      setBackgroundImageUrl("");
+                      setBackgroundStatus("Background removed.");
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+                <Input
+                  value={backgroundImageUrl}
+                  onChange={(e) => setBackgroundImageUrl(e.target.value)}
+                  placeholder="Image URL (or data URL)"
+                />
+                <label className="flex flex-col gap-2">
+                  <span className="text-xs text-muted-foreground">Overlay opacity (0–1)</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={backgroundOverlayOpacity}
+                    onChange={(e) => setBackgroundOverlayOpacity(e.target.value)}
+                  />
+                </label>
+                {backgroundImageUrl ? (
+                  <div className="h-24 rounded-lg border border-border/40 overflow-hidden relative">
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        backgroundImage: `url(${backgroundImageUrl})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    />
+                    <div
+                      className="absolute inset-0 bg-background"
+                      style={{
+                        opacity:
+                          Math.max(
+                            0,
+                            Math.min(1, Number.parseFloat(backgroundOverlayOpacity) || 0.55),
+                          ),
+                      }}
+                    />
+                  </div>
+                ) : null}
+                {backgroundStatus ? (
+                  <p className="text-xs text-muted-foreground">{backgroundStatus}</p>
+                ) : null}
+              </div>
+            ) : null}
             <div className="rounded-xl border border-border/40 p-4">
               <p className="text-sm text-muted-foreground mb-3">Profile Photo</p>
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -333,6 +610,41 @@ const BuilderPage = () => {
               </div>
               {avatarStatus ? (
                 <p className="text-xs text-muted-foreground mt-2">{avatarStatus}</p>
+              ) : null}
+            </div>
+            <div className="rounded-xl border border-border/40 p-4">
+              <p className="text-sm text-muted-foreground mb-3">CV / Resume</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="inline-flex">
+                  <Input
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="hidden"
+                    onChange={handleCvUpload}
+                  />
+                  <span className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Attach CV
+                  </span>
+                </label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={!cv}
+                  onClick={() => {
+                    setCv(undefined);
+                    setCvStatus("CV removed.");
+                  }}
+                >
+                  Remove
+                </Button>
+              </div>
+              {cvStatus ? (
+                <p className="text-xs text-muted-foreground mt-2">{cvStatus}</p>
+              ) : cv?.fileName ? (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Attached: {cv.fileName}
+                </p>
               ) : null}
             </div>
             <Textarea
