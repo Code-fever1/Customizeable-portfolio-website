@@ -71,5 +71,13 @@ export const loadProfile = (slug: string) => {
   return safeParse<PortfolioProfile>(window.localStorage.getItem(getProfileKey(slug)));
 };
 
+
+export const deleteProfile = (slug: string) => {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(getProfileKey(slug));
+  const nextIndex = readIndex().filter((s) => s !== slug);
+  writeIndex(nextIndex);
+};
+
 export const listProfiles = () => readIndex();
 

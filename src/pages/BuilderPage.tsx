@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import ColorPicker from "@/components/ui/ColorPicker";
 import { defaultProfile } from "@/data/defaultProfile";
-import { createSlug, listProfiles, saveProfile } from "@/lib/profileStorage";
+import { createSlug, listProfiles, saveProfile, deleteProfile } from "@/lib/profileStorage";
 import type {
   PortfolioProfile,
   PortfolioProject,
@@ -214,7 +214,7 @@ const BuilderPage = () => {
       <div className="container mx-auto px-4 py-10 max-w-5xl space-y-8">
         <header className="space-y-3">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Portfolio SaaS Builder
+            Portfolio Builder
           </p>
           <h1 className="text-3xl md:text-5xl font-display font-bold">
             Create a personalized portfolio website
@@ -568,14 +568,29 @@ const BuilderPage = () => {
             <h2 className="font-display text-xl">Saved Profiles</h2>
             <div className="flex flex-wrap gap-2">
               {savedSlugs.map((slug) => (
-                <Button
-                  key={slug}
-                  type="button"
-                  variant="secondary"
-                  onClick={() => navigate(`/u/${slug}`)}
-                >
-                  {slug}
-                </Button>
+                <div key={slug} className="relative flex items-center group">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="pr-7"
+                    onClick={() => navigate(`/u/${slug}`)}
+                  >
+                    {slug}
+                  </Button>
+                  <button
+                    type="button"
+                    aria-label="Delete profile"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 opacity-60 group-hover:opacity-100 hover:text-destructive transition-colors"
+                    style={{ fontSize: 14, lineHeight: 1 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteProfile(slug);
+                      setSavedSlugs(listProfiles());
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               ))}
             </div>
           </section>
