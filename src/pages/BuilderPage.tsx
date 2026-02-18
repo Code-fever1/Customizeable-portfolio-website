@@ -22,6 +22,33 @@ const parseCommaSeparated = (value: string) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
+const getPreviewBackground = (background: PortfolioBackground, fallbackColor: string) => {
+  if (background.type === "solid") {
+    return {
+      style: { background: background.color || fallbackColor },
+      overlayOpacity: 0,
+    };
+  }
+
+  if (background.type === "gradient") {
+    return {
+      style: {
+        backgroundImage: `linear-gradient(${background.angle ?? 135}deg, ${background.from}, ${background.to})`,
+      },
+      overlayOpacity: 0,
+    };
+  }
+
+  return {
+    style: {
+      backgroundImage: `url(${background.imageUrl})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+    },
+    overlayOpacity: background.overlayOpacity ?? 0.55,
+  };
+};
+
 const BuilderPage = () => {
   const navigate = useNavigate();
 
@@ -379,9 +406,44 @@ const BuilderPage = () => {
     e.currentTarget.value = "";
   };
 
+  const previewProfile = useMemo(
+    () => buildProfileFromForm(),
+    [
+      suggestedSlug,
+      name,
+      tagline,
+      rolesInput,
+      bio,
+      location,
+      yearsOfExperience,
+      avatarUrl,
+      toolsInput,
+      skills,
+      projects,
+      github,
+      linkedin,
+      email,
+      theme,
+      template,
+      mainBgColor,
+      cv,
+      backgroundType,
+      gradientFrom,
+      gradientTo,
+      gradientAngle,
+      backgroundImageUrl,
+      backgroundOverlayOpacity,
+    ],
+  );
+
+  const previewBackground = getPreviewBackground(
+    previewProfile.background ?? { type: "solid", color: previewProfile.mainBgColor },
+    previewProfile.mainBgColor,
+  );
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="container mx-auto px-4 py-10 max-w-5xl space-y-8">
+      <div className="container mx-auto px-4 py-10 max-w-7xl space-y-8">
         <header className="space-y-3">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Portfolio Builder
@@ -423,7 +485,9 @@ const BuilderPage = () => {
           </div>
         </header>
 
-        <form onSubmit={handleSaveAndOpen} className="space-y-8">
+        <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="space-y-8">
+            <form onSubmit={handleSaveAndOpen} className="space-y-8">
           <section className="glass rounded-2xl p-6 space-y-4">
             <h2 className="font-display text-xl">Basic Profile</h2>
             <div className="grid md:grid-cols-2 gap-4">
@@ -569,7 +633,7 @@ const BuilderPage = () => {
                   placeholder="Image URL (or data URL)"
                 />
                 <label className="flex flex-col gap-2">
-                  <span className="text-xs text-muted-foreground">Overlay opacity (0–1)</span>
+                  <span className="text-xs text-muted-foreground">Overlay opacity (0-1)</span>
                   <Input
                     type="number"
                     min={0}
@@ -906,38 +970,151 @@ const BuilderPage = () => {
           </div>
         </form>
 
-        {savedSlugs.length > 0 ? (
-          <section className="glass rounded-2xl p-6 space-y-3">
-            <h2 className="font-display text-xl">Saved Profiles</h2>
-            <div className="flex flex-wrap gap-2">
-              {savedSlugs.map((slug) => (
-                <div key={slug} className="relative flex items-center group">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="pr-7"
-                    onClick={() => navigate(`/u/${slug}`)}
-                  >
-                    {slug}
-                  </Button>
-                  <button
-                    type="button"
-                    aria-label="Delete profile"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 opacity-60 group-hover:opacity-100 hover:text-destructive transition-colors"
-                    style={{ fontSize: 14, lineHeight: 1 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteProfile(slug);
-                      setSavedSlugs(listProfiles());
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+            {savedSlugs.length > 0 ? (
+              <section className="glass rounded-2xl p-6 space-y-3">
+                <h2 className="font-display text-xl">Saved Profiles</h2>
+                <div className="flex flex-wrap gap-2">
+                  {savedSlugs.map((slug) => (
+                    <div key={slug} className="relative flex items-center group">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="pr-7"
+                        onClick={() => navigate(`/u/${slug}`)}
+                      >
+                        {slug}
+                      </Button>
+                      <button
+                        type="button"
+                        aria-label="Delete profile"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 opacity-60 group-hover:opacity-100 hover:text-destructive transition-colors"
+                        style={{ fontSize: 14, lineHeight: 1 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteProfile(slug);
+                          setSavedSlugs(listProfiles());
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
+              </section>
+            ) : null}
+          </div>
+          <aside className="xl:sticky xl:top-6 space-y-4">
+            <section className="glass rounded-2xl p-5 space-y-4">
+              <div>
+                <h2 className="font-display text-xl">Live Preview</h2>
+                <p className="text-sm text-muted-foreground">
+                  Changes appear instantly while you edit profile info and colors.
+                </p>
+              </div>
+              <div className="rounded-2xl overflow-hidden border border-border/40 bg-black">
+                <div className="relative min-h-[420px] p-5">
+                  <div className="absolute inset-0" style={previewBackground.style} />
+                  {previewProfile.background?.type === "image" ? (
+                    <div
+                      className="absolute inset-0 bg-black"
+                      style={{ opacity: previewBackground.overlayOpacity }}
+                    />
+                  ) : null}
+                  <div className="relative z-10 text-white space-y-4">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={previewProfile.avatarUrl || "/placeholder.svg"}
+                        alt={previewProfile.name || "Preview avatar"}
+                        className="h-14 w-14 rounded-full object-cover border border-white/40"
+                      />
+                      <div>
+                        <p className="text-lg font-semibold leading-tight">
+                          {previewProfile.name || "Your Name"}
+                        </p>
+                        <p className="text-xs text-white/80">
+                          {previewProfile.location || "Location"}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-white/90">
+                      {previewProfile.tagline || "Add a short tagline for your portfolio."}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {(previewProfile.roles.length ? previewProfile.roles : ["Role"])
+                        .slice(0, 3)
+                        .map((role) => (
+                          <span
+                            key={role}
+                            className="rounded-full border border-white/35 bg-white/15 px-3 py-1 text-xs"
+                          >
+                            {role}
+                          </span>
+                        ))}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 pt-1">
+                      <div className="rounded-md bg-white/15 px-3 py-2 text-center text-xs">
+                        Projects
+                      </div>
+                      {previewProfile.cv ? (
+                        <div className="rounded-md bg-white/15 px-3 py-2 text-center text-xs">
+                          CV
+                        </div>
+                      ) : (
+                        <div className="rounded-md bg-white/10 px-3 py-2 text-center text-xs text-white/60">
+                          CV
+                        </div>
+                      )}
+                      <div className="rounded-md bg-white/15 px-3 py-2 text-center text-xs">
+                        Contact
+                      </div>
+                    </div>
+                    <div className="space-y-2 pt-2">
+                      <p className="text-xs uppercase tracking-[0.2em] text-white/70">
+                        Featured Projects
+                      </p>
+                      {(previewProfile.projects.length
+                        ? previewProfile.projects
+                        : [{ title: "Project title", category: "Category" }]
+                      )
+                        .slice(0, 3)
+                        .map((project, index) => (
+                          <div
+                            key={`${project.title}-${index}`}
+                            className="rounded-lg bg-white/10 px-3 py-2"
+                          >
+                            <p className="text-sm font-medium">
+                              {project.title || "Untitled project"}
+                            </p>
+                            <p className="text-xs text-white/80">
+                              {project.category || "General"}
+                            </p>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-md border border-border/40 p-2">
+                  <span className="text-muted-foreground">Template:</span>{" "}
+                  {previewProfile.template ?? "neo"}
+                </div>
+                <div className="rounded-md border border-border/40 p-2">
+                  <span className="text-muted-foreground">Theme:</span>{" "}
+                  {previewProfile.theme ?? "dark"}
+                </div>
+                <div className="rounded-md border border-border/40 p-2">
+                  <span className="text-muted-foreground">Slug:</span>{" "}
+                  {previewProfile.slug}
+                </div>
+                <div className="rounded-md border border-border/40 p-2">
+                  <span className="text-muted-foreground">Projects:</span>{" "}
+                  {previewProfile.projects.length}
+                </div>
+              </div>
+            </section>
+          </aside>
+        </div>
       </div>
     </div>
   );
