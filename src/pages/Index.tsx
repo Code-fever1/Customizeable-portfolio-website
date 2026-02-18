@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import ParticleBackground from "@/components/portfolio/ParticleBackground";
 import CustomCursor from "@/components/portfolio/CustomCursor";
 import NoiseOverlay from "@/components/portfolio/NoiseOverlay";
@@ -11,25 +12,34 @@ import ServicesSection from "@/components/portfolio/ServicesSection";
 import ContactSection from "@/components/portfolio/ContactSection";
 import Footer from "@/components/portfolio/Footer";
 import CommandPalette from "@/components/portfolio/CommandPalette";
+import type { PortfolioProfile } from "@/types/profile";
 
-const Index = () => {
+type IndexProps = {
+  profile: PortfolioProfile;
+};
+
+const Index = ({ profile }: IndexProps) => {
+  useEffect(() => {
+    document.title = `${profile.name} | Portfolio`;
+  }, [profile.name]);
+
   return (
     <div className="relative min-h-screen bg-background overflow-x-hidden cursor-none md:cursor-none">
       <ParticleBackground />
       <CustomCursor />
       <NoiseOverlay />
-      <CommandPalette />
-      <Navbar />
+      <CommandPalette links={profile.links} />
+      <Navbar name={profile.name} theme={profile.theme} />
       <main>
-        <HeroSection />
-        <TechMarquee />
-        <AboutSection />
-        <SkillsSection />
-        <ProjectsSection />
+        <HeroSection profile={profile} />
+        <TechMarquee tools={profile.tools} />
+        <AboutSection profile={profile} />
+        <SkillsSection skills={profile.skills} />
+        <ProjectsSection projects={profile.projects} />
         <ServicesSection />
-        <ContactSection />
+        <ContactSection email={profile.links.email} location={profile.location} />
       </main>
-      <Footer />
+      <Footer name={profile.name} links={profile.links} />
     </div>
   );
 };

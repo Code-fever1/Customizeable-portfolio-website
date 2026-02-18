@@ -1,87 +1,45 @@
 import { useScrollReveal } from "@/hooks/useScrollReveal";
-import { Globe, Server, Wrench, Brain, Code2, Database, GitBranch, Figma, Container, Workflow } from "lucide-react";
+import {
+  Globe,
+  Server,
+  Brain,
+  Code2,
+  Database,
+  GitBranch,
+  Figma,
+  Container,
+  Workflow,
+} from "lucide-react";
+import type { PortfolioSkill } from "@/types/profile";
 
-const bentoItems = [
-  {
-    title: "React & Next.js",
-    level: 88,
-    icon: Code2,
-    size: "col-span-2 row-span-2",
-    description: "Building modern, performant UIs with component-driven architecture",
-  },
-  {
-    title: "TypeScript",
-    level: 85,
-    icon: Code2,
-    size: "col-span-1 row-span-1",
-    description: "Type-safe development",
-  },
-  {
-    title: "Node.js",
-    level: 85,
-    icon: Server,
-    size: "col-span-1 row-span-1",
-    description: "Server-side JavaScript",
-  },
-  {
-    title: "Tailwind CSS",
-    level: 75,
-    icon: Globe,
-    size: "col-span-1 row-span-2",
-    description: "Rapid UI styling with utility-first CSS",
-  },
-  {
-    title: "MongoDB",
-    level: 92,
-    icon: Database,
-    size: "col-span-1 row-span-1",
-    description: "NoSQL database",
-  },
-  {
-    title: "PostgreSQL",
-    level: 80,
-    icon: Database,
-    size: "col-span-1 row-span-1",
-    description: "Relational databases",
-  },
-  {
-    title: "Git & GitHub",
-    level: 90,
-    icon: GitBranch,
-    size: "col-span-1 row-span-1",
-    description: "Version control",
-  },
-  {
-    title: "AI Agents",
-    level: 95,
-    icon: Brain,
-    size: "col-span-2 row-span-1",
-    description: "Building intelligent automation with modern AI frameworks",
-  },
-  {
-    title: "Figma",
-    level: 75,
-    icon: Figma,
-    size: "col-span-1 row-span-1",
-    description: "Design to code",
-  },
-  {
-    title: "Docker",
-    level: 20,
-    icon: Container,
-    size: "col-span-1 row-span-1",
-    description: "Containerization",
-  },
-  {
-    title: "CI/CD",
-    level: 85,
-    icon: Workflow,
-    size: "col-span-1 row-span-1",
-    description: "Automated pipelines",
-  },
+type SkillsSectionProps = {
+  skills: PortfolioSkill[];
+};
+
+const icons = [
+  Code2,
+  Server,
+  Globe,
+  Database,
+  GitBranch,
+  Brain,
+  Figma,
+  Container,
+  Workflow,
 ];
 
-const SkillsSection = () => {
+const sizePattern = [
+  "col-span-2 row-span-2",
+  "col-span-1 row-span-1",
+  "col-span-1 row-span-1",
+  "col-span-1 row-span-2",
+  "col-span-1 row-span-1",
+  "col-span-1 row-span-1",
+  "col-span-1 row-span-1",
+  "col-span-2 row-span-1",
+];
+
+const SkillsSection = ({ skills }: SkillsSectionProps) => {
   const { ref, isVisible } = useScrollReveal();
 
   return (
@@ -91,20 +49,20 @@ const SkillsSection = () => {
           My <span className="gradient-text">Skills</span>
         </h2>
         <p className={`text-center text-muted-foreground mb-16 max-w-lg mx-auto ${isVisible ? "animate-slide-up" : "opacity-0"}`}>
-          Technologies and tools I work with
+          Technologies and capabilities for this profile
         </p>
 
-        {/* Bento Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 auto-rows-[120px] md:auto-rows-[140px]">
-          {bentoItems.map((item, i) => {
-            const Icon = item.icon;
+          {skills.map((item, i) => {
+            const Icon = icons[i % icons.length];
+            const sizeClass = sizePattern[i % sizePattern.length];
+
             return (
               <div
-                key={item.title}
-                className={`${item.size} glass rounded-2xl p-5 relative overflow-hidden group hover:glow-primary transition-all duration-500 ${isVisible ? "animate-scale-up" : "opacity-0"}`}
+                key={`${item.name}-${i}`}
+                className={`${sizeClass} glass rounded-2xl p-5 relative overflow-hidden group hover:glow-primary transition-all duration-500 ${isVisible ? "animate-scale-up" : "opacity-0"}`}
                 style={{ animationDelay: `${0.1 + i * 0.05}s` }}
               >
-                {/* Progress bar at bottom */}
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted">
                   <div
                     className="h-full transition-all duration-1000 ease-out"
@@ -122,12 +80,13 @@ const SkillsSection = () => {
                       <Icon className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
                       <span className="text-xs text-muted-foreground font-mono">{item.level}%</span>
                     </div>
-                    <h3 className="font-display font-semibold text-foreground text-sm md:text-base">{item.title}</h3>
+                    <h3 className="font-display font-semibold text-foreground text-sm md:text-base">{item.name}</h3>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed mt-1 line-clamp-2">{item.description}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed mt-1 line-clamp-2">
+                    {item.description}
+                  </p>
                 </div>
 
-                {/* Hover gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
               </div>
             );

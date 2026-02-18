@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { PortfolioTheme } from "@/types/profile";
 
 const navLinks = [
   { label: "Home", href: "#hero" },
@@ -11,15 +12,30 @@ const navLinks = [
   { label: "Contact", href: "#contact" },
 ];
 
-const Navbar = () => {
+type NavbarProps = {
+  name: string;
+  theme?: PortfolioTheme;
+};
+
+const resolveTheme = (theme?: PortfolioTheme) => {
+  if (theme === "light") return false;
+  if (theme === "dark") return true;
+
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+};
+
+const Navbar = ({ name, theme }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [dark, setDark] = useState(true);
+  const [dark, setDark] = useState(() => resolveTheme(theme));
   const [activeSection, setActiveSection] = useState("hero");
 
   useEffect(() => {
-    document.documentElement.classList.add("dark");
-  }, []);
+    const shouldUseDark = resolveTheme(theme);
+    document.documentElement.classList.toggle("dark", shouldUseDark);
+    setDark(shouldUseDark);
+  }, [theme]);
 
   useEffect(() => {
     const handler = () => {
@@ -43,8 +59,11 @@ const Navbar = () => {
   }, []);
 
   const toggleTheme = () => {
-    setDark(!dark);
-    document.documentElement.classList.toggle("dark");
+    setDark((prev) => {
+      const next = !prev;
+      document.documentElement.classList.toggle("dark", next);
+      return next;
+    });
   };
   const iconButtonClass = dark ? "text-gray-300 hover:text-gray-100" : "text-black hover:text-black";
 
@@ -60,7 +79,7 @@ const Navbar = () => {
         <a href="#hero" className={`font-display text-xl font-bold ${
           dark ? "text-gray-300" : "text-gray-500"
         }`}>
-          &lt;/&gt; Syed Ali Jah
+          &lt;/&gt; {name}
         </a>
 
         {/* Desktop */}
@@ -81,6 +100,12 @@ const Navbar = () => {
           <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme" className={iconButtonClass}>
             {dark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4 text-black" />}
           </Button>
+          <a
+            href="/"
+            className="text-xs px-4 py-2 rounded-md bg-primary text-primary-foreground font-semibold shadow-sm transition-colors duration-200 hover:bg-primary/80 hover:text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+          >
+            Create Yours
+          </a>
         </div>
 
         {/* Mobile toggle */}
@@ -112,6 +137,15 @@ const Navbar = () => {
                 {l.label}
               </a>
             ))}
+            <a
+              href="/"
+              onClick={() => setMobileOpen(false)}
+              className={`text-sm py-2 transition-colors ${
+                dark ? "text-gray-500 hover:text-gray-300" : "text-gray-700 hover:text-black"
+              }`}
+            >
+              Create Yours
+            </a>
           </div>
         </div>
       )}
