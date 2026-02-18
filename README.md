@@ -1,73 +1,68 @@
-# Welcome to your Lovable project
+# Portfolio Builder
 
-## Project info
+A React + Vite portfolio builder where users can:
+- create/edit profile data
+- customize templates and backgrounds
+- attach a CV
+- preview changes live while editing
+- export profile JSON
+- download a hosting-ready website ZIP
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Tech Stack
 
-## How can I edit this code?
+- Vite
+- React + TypeScript
+- Tailwind CSS
+- shadcn/ui
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Getting Started
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Open `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Main Features
 
-**Use GitHub Codespaces**
+1. Builder with live side-by-side preview (`Create Yours` page).
+2. Profile import/export as JSON.
+3. CV attachment (included in profile data and available as download button on portfolio page).
+4. Template and background options:
+   - `neo` / `minimal`
+   - solid / gradient / image backgrounds
+5. Saved profiles in localStorage with slug-based routes (`/u/:slug`).
+6. Exported-build UI rules:
+   - hide `Create Yours`
+   - hide `Download Website ZIP`
+   - hide `Download Profile JSON`
+   - keep `Projects`, `CV`, and `Contact` actions
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Website ZIP Export Behavior
 
-## What technologies are used for this project?
+`Download Website ZIP` uses two modes:
 
-This project is built with:
+1. Server export (preferred): calls `POST /__export/web` and returns a ZIP built from the export pipeline.
+2. Client fallback (for deployed/static hosting): builds ZIP in-browser from currently hosted files + generated `profile.json`.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### ZIP structure
 
-## How can I deploy this project?
+- ZIP contains files at the root (no `dist/` subfolder in deployed fallback).
+- Upload extracted files directly to static hosting.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Scripts
 
-## Can I connect a custom domain to my Lovable project?
+```sh
+npm run dev
+npm run build
+npm run preview
+npm run test
+npm run lint
+```
 
-Yes, you can!
+## Notes
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- Profiles are stored locally in browser storage.
+- The export endpoint exists in Vite config for local/export-server flows.
+- Large bundled JS warning may appear after adding ZIP tooling (`jszip`); build still succeeds.

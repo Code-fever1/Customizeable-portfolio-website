@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import ColorPicker from "@/components/ui/ColorPicker";
 import { defaultProfile } from "@/data/defaultProfile";
 import { createSlug, listProfiles, saveProfile, deleteProfile } from "@/lib/profileStorage";
+import { downloadWebsiteZip } from "@/lib/webExport";
 import type {
   PortfolioBackground,
   PortfolioProfile,
@@ -251,23 +252,14 @@ const BuilderPage = () => {
     const profile = buildProfileFromForm();
 
     try {
-      const res = await fetch("/__export/web", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
-      });
-
-      if (!res.ok) throw new Error("Export endpoint not available");
-
-      const blob = await res.blob();
-      const objectUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = objectUrl;
-      link.download = `${profile.slug}-web.zip`;
-      link.click();
-      window.URL.revokeObjectURL(objectUrl);
+      const result = await downloadWebsiteZip(profile);
+      setImportStatus(
+        result.mode === "server"
+          ? "Downloaded website ZIP."
+          : "Downloaded website ZIP using deployed site files.",
+      );
     } catch {
-      setImportStatus("Web export works only on your local dev server.");
+      setImportStatus("Could not create website ZIP on this server.");
     }
   };
 

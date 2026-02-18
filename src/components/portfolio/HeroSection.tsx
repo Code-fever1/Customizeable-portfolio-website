@@ -5,6 +5,7 @@ import MagneticButton from "./MagneticButton";
 import type { PortfolioProfile } from "@/types/profile";
 import { createSlug } from "@/lib/profileStorage";
 import { toast } from "@/components/ui/sonner";
+import { downloadWebsiteZip } from "@/lib/webExport";
 
 type HeroSectionProps = {
   profile: PortfolioProfile;
@@ -56,25 +57,12 @@ const HeroSection = ({ profile, isExportedBuild = false }: HeroSectionProps) => 
 
   const handleDownloadWebsiteZip = async () => {
     try {
-      const res = await fetch("/__export/web", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
-      });
-
-      if (!res.ok) {
-        throw new Error("Export endpoint not available");
+      const result = await downloadWebsiteZip(profile);
+      if (result.mode === "client") {
+        toast.success("Downloaded ZIP using deployed site files.");
       }
-
-      const blob = await res.blob();
-      const objectUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = objectUrl;
-      link.download = `${createSlug(profile.name)}-web.zip`;
-      link.click();
-      window.URL.revokeObjectURL(objectUrl);
     } catch {
-      toast.error("Web export works only on your local dev server.");
+      toast.error("Could not create website ZIP on this server.");
     }
   };
 
