@@ -9,6 +9,7 @@ export const defaultProfile: PortfolioProfile = {
   location: "Austin, Texas",
   yearsOfExperience: 4,
   avatarUrl: null,
+  mainBgColor: "#1e1b4b",
   tools: [
     "React",
     "TypeScript",
