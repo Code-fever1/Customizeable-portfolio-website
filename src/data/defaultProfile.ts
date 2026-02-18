@@ -8,7 +8,7 @@ export const defaultProfile: PortfolioProfile = {
   bio: "Product-focused developer with experience building polished interfaces, clean APIs, and maintainable application architecture for small teams and startups.",
   location: "Austin, Texas",
   yearsOfExperience: 4,
-  avatarUrl: null,
+  avatarUrl: "/public/placeholder.svg",
   mainBgColor: "#1e1b4b",
   tools: [
     "React",
