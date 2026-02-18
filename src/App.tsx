@@ -7,19 +7,42 @@ import BuilderPage from "./pages/BuilderPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import NotFound from "./pages/NotFound";
 import WelcomeInfo from "@/components/ui/WelcomeInfo";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const queryClient = new QueryClient();
 
+type RuntimeMode = "checking" | "builder" | "exported";
+
+const isValidExportProfile = (value: unknown): boolean => {
+  if (!value || typeof value !== "object") return false;
+  const maybeProfile = value as { name?: unknown };
+  return (
+    typeof maybeProfile.name === "string" && maybeProfile.name.trim().length > 0
+  );
+};
+
+const detectExportedRuntime = async () => {
+  try {
+    const res = await fetch(`/profile.json?ts=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) return false;
+    const payload = (await res.json()) as unknown;
+    return isValidExportProfile(payload);
+  } catch {
+    return false;
+  }
+};
+
 const AppInner = ({
+  runtimeMode,
   showWelcome,
   setShowWelcome,
 }: {
+  runtimeMode: RuntimeMode;
   showWelcome: boolean;
   setShowWelcome: (value: boolean) => void;
 }) => {
   const navigate = useNavigate();
-  const isExportBuild = import.meta.env.MODE === "export";
+  const isExportBuild = runtimeMode === "exported";
 
   const handleWelcomeComplete = (info: { name: string; email: string }) => {
     window.localStorage.setItem("welcomeInfoSubmitted", "true");
@@ -29,7 +52,15 @@ const AppInner = ({
     navigate("/");
   };
 
-  return showWelcome ? (
+  if (runtimeMode === "checking") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">
+        Preparing your workspace...
+      </div>
+    );
+  }
+
+  return !isExportBuild && showWelcome ? (
     <WelcomeInfo onComplete={handleWelcomeComplete} />
   ) : (
     <Routes>
@@ -46,10 +77,38 @@ const AppInner = ({
 };
 
 const App = () => {
-  const [showWelcome, setShowWelcome] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return !window.localStorage.getItem("welcomeInfoSubmitted");
-  });
+  const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>(() =>
+    import.meta.env.MODE === "export" ? "exported" : "checking",
+  );
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (runtimeMode !== "checking") return;
+
+    let cancelled = false;
+    const welcomeWasSubmitted = Boolean(
+      window.localStorage.getItem("welcomeInfoSubmitted"),
+    );
+
+    (async () => {
+      const isExportedRuntime = await detectExportedRuntime();
+      if (cancelled) return;
+
+      if (isExportedRuntime) {
+        setRuntimeMode("exported");
+        setShowWelcome(false);
+        return;
+      }
+
+      setRuntimeMode("builder");
+      setShowWelcome(!welcomeWasSubmitted);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [runtimeMode]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -57,7 +116,11 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AppInner showWelcome={showWelcome} setShowWelcome={setShowWelcome} />
+          <AppInner
+            runtimeMode={runtimeMode}
+            showWelcome={showWelcome}
+            setShowWelcome={setShowWelcome}
+          />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
